@@ -56,6 +56,9 @@ from root_views import NotFoundView, ForbiddenView
 from root_views import UploadStatsView, UpdateDocs
 from update import UpdateInstanceView
 
+from ikaaro.fields import Integer_Field
+from itools.validators import validator
+from ikaaro.autoedit import AutoEdit
 
 # itools source and target languages
 config = get_abspath('setup.conf')
@@ -63,6 +66,7 @@ config = ro_database.get_handler(config,  ConfigFile)
 itools_source_language = config.get_value('source_language')
 itools_target_languages = config.get_value('target_languages')
 
+from itools.validators.test_view import TestValidators
 
 # Force email to send UTF-8 mails in plain text
 add_charset('utf-8', QP, None, 'utf-8')
@@ -561,6 +565,8 @@ class Root(Folder):
     #######################################################################
     # Views
     #######################################################################
+    integer = Integer_Field(validators=(validator('max-value', max_value=10),))
+    edit2 = AutoEdit(fields=('integer',))
     register = RegisterForm
     terms_of_service = TermsOfService_View
     # Public views
@@ -574,6 +580,7 @@ class Root(Folder):
     update_instance = UpdateInstanceView
     update_docs = UpdateDocs
     _ctrl = CtrlView
+    test_validators = TestValidators
 
 
     #######################################################################
