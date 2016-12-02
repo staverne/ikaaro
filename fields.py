@@ -340,16 +340,21 @@ class SelectAbspath_Field(Select_Field):
         pass
 
 
+    def get_option_title(self, item):
+        return item.get_title()
+
+
     def get_value_title(self, resource, name, language=None, mode=None):
         abspath = self.get_value(resource, name, language=language)
         if not abspath:
             return None
         if self.multiple is False:
-            return resource.get_resource(abspath).get_title()
+            option = resource.get_resource(abspath)
+            return self.get_option_title(option)
         titles = []
         for x in abspath:
-            r = resource.get_resource(x)
-            titles.append(r.get_title())
+            option = resource.get_resource(x)
+            titles.append(self.get_option_title(abspath))
         return ', '.join(titles)
 
 
