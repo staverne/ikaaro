@@ -51,6 +51,7 @@ from fields import Char_Field
 from folder import Folder
 from resource_views import LoginView
 from skins import skin_registry
+from rest import Rest_GetSelectFieldsView
 from root_views import PoweredBy, ContactForm
 from root_views import NotFoundView, ForbiddenView
 from root_views import UploadStatsView, UpdateDocs
@@ -566,6 +567,8 @@ class Root(Folder):
     # Public views
     contact = ContactForm
     powered_by = PoweredBy
+    # Rest API
+    get_selectfields_view = Rest_GetSelectFieldsView
     # Special
     forbidden = ForbiddenView
     unauthorized = LoginView

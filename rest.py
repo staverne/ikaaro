@@ -17,16 +17,16 @@
 
 # Import from the Standard Library
 from base64 import b64encode, b64decode
-import json
 
 # Import from itools
 from itools.core import proto_lazy_property
 from itools.database import AndQuery, PhraseQuery
+from itools.datatypes import String
 from itools.handlers import checkid
 from itools.web import BaseView
 
 # Import from ikaaro
-from fields import Metadata_Field, File_Field
+from fields import Metadata_Field, File_Field, get_selectfields
 from resource_views import LoginView
 from utils import get_base_path_query
 
@@ -286,3 +286,15 @@ class Rest_Schema(Rest_BaseView):
 
         # Ok
         return self.return_json(schema, context)
+
+
+
+class Rest_GetSelectFieldsView(Rest_BaseView):
+
+    access = True
+    query_schema = {'fields': String(multiple=True)}
+
+    def GET(self, resource, context):
+        fields_names = context.query['fields']
+        kw = get_selectfields(fields_names)
+        return self.return_json(kw, context)

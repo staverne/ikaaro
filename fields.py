@@ -19,9 +19,9 @@ from copy import deepcopy
 from types import FunctionType
 
 # Import from itools
-from itools.core import freeze
+from itools.core import freeze, is_prototype
 from itools.csv import Property
-from itools.database import magic_from_buffer
+from itools.database import magic_from_buffer, get_field_from_index
 from itools.database import Field as BaseField
 from itools.datatypes import Boolean, Decimal, Date, DateTime, Email
 from itools.datatypes import Enumerate, Integer, String, Unicode, URI
@@ -351,6 +351,20 @@ class SelectAbspath_Field(Select_Field):
             r = resource.get_resource(x)
             titles.append(r.get_title())
         return ', '.join(titles)
+
+
+
+def get_selectfields(fields_names):
+    kw = {}
+    for name in fields_names:
+        try:
+            field = get_field_from_index(name)
+        except KeyError:
+            raise ValueError('field {} do not exist in fields index'.format(name))
+        if not is_prototype(field, Select_Field):
+            raise ValueError('field {} is not a selectfield'.format(name))
+        kw[name] = field.get_datatype().get_options()
+    return kw
 
 
 
@@ -810,6 +824,7 @@ class HTMLFile_Field(File_Field):
 
 
 class SelectDays_Field(Select_Field):
+    field_id = 'daysofweek'
     datatype = DaysOfWeek
     widget = CheckboxWidget
     widget_keys = Select_Field.widget_keys + ['oneline']
