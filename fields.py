@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # Import from the Standard Library
+from operator import itemgetter
 from copy import deepcopy
 from types import FunctionType
 
@@ -23,6 +24,7 @@ from itools.core import freeze, is_prototype
 from itools.csv import Property
 from itools.database import magic_from_buffer, get_field_from_index
 from itools.database import Field as BaseField
+from itools.database import AndQuery, PhraseQuery
 from itools.datatypes import Boolean, Decimal, Date, DateTime, Email
 from itools.datatypes import Enumerate, Integer, String, Unicode, URI
 from itools.handlers import get_handler_class_by_mimetype
@@ -42,7 +44,7 @@ from datatypes import Boolean3, BirthDate, HexadecimalColor, HTMLBody
 from datatypes import Password_Datatype, ChoosePassword_Datatype
 from datatypes import DaysOfWeek
 from links import get_abspath_links, update_abspath_links
-from utils import split_reference, get_secure_hash
+from utils import split_reference, get_base_path_query, get_secure_hash
 
 
 class Field(BaseField):
@@ -321,10 +323,28 @@ class Select_Field(Metadata_Field):
         return rest
 
 
+
+class SelectAbspathEnumerate(String):
+
+
+    @staticmethod
+    def is_valid(value):
+        return True
+
+
 class SelectAbspath_Field(Select_Field):
     """
     Select_Field with values linking to resources abspath
     """
+
+    base_classes = None
+    the_format = None
+    base_path = None
+    min_depth = 1
+    max_depth = None
+    linked_key = None
+    linked_value = None
+    datatype = SelectAbspathEnumerate
 
     def get_links(self, links, resource, field_name, languages):
         return get_abspath_links(self, links, resource, field_name, languages)
@@ -340,7 +360,53 @@ class SelectAbspath_Field(Select_Field):
         pass
 
 
+    def get_widget(self, name):
+        proxy = super(SelectAbspath_Field, self)
+        widget = proxy.get_widget(name)
+        widget = widget(widget_options=self.get_options(),
+                        use_widget_options=True)
+        return widget
+
+
+    def get_options(self):
+        context = get_context()
+        options = []
+        query = self.get_query(context)
+        search = context.search(query)
+        for brain in search.get_documents():
+            options.append({'name': str(brain.abspath),
+                            'value': self.get_option_title(brain)})
+        options.sort(key=itemgetter('value'))
+        return options
+
+
+    def get_query(self, context):
+        query = AndQuery()
+        if self.base_classes:
+            query.append(PhraseQuery('base_classes', self.base_classes))
+        if self.the_format:
+            query.append(PhraseQuery('format', self.the_format))
+        if self.base_path:
+            query.append(get_base_path_query(self.base_path, self.min_depth, self.max_depth))
+        if self.linked_key:
+            linked_value = self.get_linked_value(context)
+            query.append(PhraseQuery(self.linked_key, linked_value))
+        print query
+        return query
+
+
+    def get_linked_value(self, context):
+        form = context.get_form()
+        print form
+        return form['field_1']
+
+
     def get_option_title(self, item):
+        if hasattr(item, 'class_id'):
+            # Resource
+            return item.get_title()
+        # Brain
+        item = get_context().root.get_resource(item.abspath)
         return item.get_title()
 
 
@@ -359,7 +425,7 @@ class SelectAbspath_Field(Select_Field):
 
 
 
-def get_selectfields(fields_names):
+def get_selectfields(fields_names, linked_value, context):
     kw = {}
     for name in fields_names:
         try:
@@ -368,7 +434,8 @@ def get_selectfields(fields_names):
             raise ValueError('field {} do not exist in fields index'.format(name))
         if not is_prototype(field, Select_Field):
             raise ValueError('field {} is not a selectfield'.format(name))
-        options = field.get_datatype().get_options()
+        field = field(linked_value=linked_value)
+        options = field.get_options()
         kw[name] = {'dict': dict((x['name'], x) for x in options),
                     'list': options}
     return kw

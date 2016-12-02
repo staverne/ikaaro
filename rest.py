@@ -292,9 +292,11 @@ class Rest_Schema(Rest_BaseView):
 class Rest_GetSelectFieldsView(Rest_BaseView):
 
     access = True
-    query_schema = {'fields': String(multiple=True)}
+    query_schema = {'fields': String(multiple=True),
+                    'linked_value': String}
 
     def GET(self, resource, context):
         fields_names = context.query['fields']
-        kw = get_selectfields(fields_names)
+        linked_value = context.query['linked_value']
+        kw = get_selectfields(fields_names, linked_value, context)
         return self.return_json(kw, context)

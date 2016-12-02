@@ -31,6 +31,7 @@ from itools.core import freeze, get_abspath
 from itools.core import proto_property, proto_lazy_property
 from itools.datatypes import Boolean, Email, Enumerate, PathDataType, String
 from itools.datatypes import Date, DateTime
+from itools.datatypes.primitive import enumerate_get_namespace
 from itools.fs import lfs
 from itools.gettext import MSG
 from itools.handlers import Image
@@ -301,6 +302,9 @@ class SelectWidget(Widget):
     has_empty_option = True
     size = None
 
+    use_widget_options = False
+    widget_options = []
+
 
     @proto_lazy_property
     def multiple(self):
@@ -309,6 +313,9 @@ class SelectWidget(Widget):
 
     def options(self):
         value = self.value
+        if self.use_widget_options:
+            print 'VALUE', self.value
+            return enumerate_get_namespace(self.widget_options, value)
         # Check whether the value is already a list of options
         # FIXME This is done to avoid a bug when using a select widget in an
         # auto-form, where the 'datatype.get_namespace' method is called
