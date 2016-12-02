@@ -363,7 +363,9 @@ def get_selectfields(fields_names):
             raise ValueError('field {} do not exist in fields index'.format(name))
         if not is_prototype(field, Select_Field):
             raise ValueError('field {} is not a selectfield'.format(name))
-        kw[name] = field.get_datatype().get_options()
+        options = field.get_datatype().get_options()
+        kw[name] = {'dict': dict((x['name'], x) for x in options),
+                    'list': options}
     return kw
 
 
